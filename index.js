@@ -28,17 +28,34 @@ async function run() {
     const pawmartDB = client.db("pawmartdb");
     const petssupplies = pawmartDB.collection("pets_and_supplies");
 
-    app.get("/pets&supplies", async (req, res) => {
+    app.get("/pets-and-supplies", async (req, res) => {
+      let { filter, search } = req.query;
+      if (filter === "pets") filter = "Pets";
+      if (filter === "foods") filter = "Foods";
+      if (filter === "accessories") filter = "Accessories";
+      if (filter === "care-products") filter = "Care Products";
+      let query = {};
+      if (filter) {
+        query = { category: filter };
+      }
+      if (search) {
+        query = { name: { $regex: search, $options: "i" } };
+      }
       const cursor = petssupplies
-        .find()
+        .find(query)
         .project({ name: 1, category: 1, price: 1, location: 1, image: 1 });
       const result = await cursor.toArray();
       res.send(result);
     });
-    app.get("/pets&supplies/:id", async (req, res) => {
+    app.get("/pets-and-supplies/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await petssupplies.findOne(query);
+      res.send(result);
+    });
+    app.post("/pets-and-supplies", async (req, res) => {
+      const data = req.body;
+      const result = await petssupplies.insertOne(data);
       res.send(result);
     });
   } finally {
