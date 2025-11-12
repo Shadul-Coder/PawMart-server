@@ -29,7 +29,7 @@ async function run() {
     const petssupplies = pawmartDB.collection("pets_and_supplies");
 
     app.get("/pets-and-supplies", async (req, res) => {
-      let { filter, search } = req.query;
+      let { filter, search, email } = req.query;
       if (filter === "pets") filter = "Pets";
       if (filter === "foods") filter = "Foods";
       if (filter === "accessories") filter = "Accessories";
@@ -41,9 +41,17 @@ async function run() {
       if (search) {
         query = { name: { $regex: search, $options: "i" } };
       }
-      const cursor = petssupplies
-        .find(query)
-        .project({ name: 1, category: 1, price: 1, location: 1, image: 1 });
+      if (email) {
+        query = { email };
+      }
+      let cursor;
+      if (email) {
+        cursor = petssupplies.find(query);
+      } else {
+        cursor = petssupplies
+          .find(query)
+          .project({ name: 1, category: 1, price: 1, location: 1, image: 1 });
+      }
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -56,6 +64,28 @@ async function run() {
     app.post("/pets-and-supplies", async (req, res) => {
       const data = req.body;
       const result = await petssupplies.insertOne(data);
+      res.send(result);
+    });
+    app.patch("/pets-and-supplies", async (req, res) => {
+      const data = req.body;
+      const query = { _id: new ObjectId(data.id) };
+      const update = {
+        $set: {
+          name: data.name,
+          price: data.price,
+          location: data.location,
+          description: data.description,
+          image: data.image,
+          date: data.date,
+        },
+      };
+      const result = await petssupplies.updateOne(query, update);
+      res.send(result);
+    });
+    app.delete("/pets-and-supplies/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await petssupplies.deleteOne(query);
       res.send(result);
     });
   } finally {
