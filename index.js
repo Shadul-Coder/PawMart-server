@@ -27,6 +27,7 @@ async function run() {
     await client.connect();
     const pawmartDB = client.db("pawmartdb");
     const petssupplies = pawmartDB.collection("pets_and_supplies");
+    const orders = pawmartDB.collection("orders");
 
     app.get("/pets-and-supplies", async (req, res) => {
       let { filter, search, email } = req.query;
@@ -86,6 +87,25 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await petssupplies.deleteOne(query);
+      res.send(result);
+    });
+    app.post("/orders", async (req, res) => {
+      const data = req.body;
+      const query = { productId: data.productId, email: data.email };
+      const update = {
+        $setOnInsert: {
+          productName: data.productName,
+          buyerName: data.buyerName,
+          price: data.price,
+          address: data.address,
+          phone: data.phone,
+          date: data.date,
+          additionalNotes: data.additionalNotes,
+        },
+        $inc: { quantity: data.quantity },
+      };
+      const options = { upsert: true };
+      const result = await orders.updateOne(query, update, options);
       res.send(result);
     });
   } finally {
