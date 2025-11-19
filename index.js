@@ -50,7 +50,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const pawmartDB = client.db("pawmartdb");
     const petssupplies = pawmartDB.collection("pets_and_supplies");
     const orders = pawmartDB.collection("orders");
@@ -60,7 +60,7 @@ async function run() {
         .find()
         .project({ name: 1, category: 1, price: 1, location: 1, image: 1 })
         .sort({ date: -1 })
-        .limit(6);
+        .limit(4);
       const result = await cursor.toArray();
       res.send(result);
     });
